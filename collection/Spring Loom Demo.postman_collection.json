@@ -1,89 +1,89 @@
 {
-	"info": {
-		"_postman_id": "7d60df14-81c6-4f9a-b608-49614f1d40bd",
-		"name": "Spring Loom Demo",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "3559566"
-	},
-	"item": [
-		{
-			"name": "Health Check",
-			"item": [
-				{
-					"name": "GET Actuator Health",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/spring-loom-demo/actuator/health",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"spring-loom-demo",
-								"actuator",
-								"health"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Customers",
-			"item": [
-				{
-					"name": "POST Trigger Customer Hydration",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/spring-loom-demo/customer/hydration/start",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"spring-loom-demo",
-								"customer",
-								"hydration",
-								"start"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": ""
-		}
-	]
+  "info": {
+    "_postman_id": "7d60df14-81c6-4f9a-b608-49614f1d40bd",
+    "name": "Spring Loom Demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "3559566"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spring-loom-demo/actuator/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spring-loom-demo",
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "POST Trigger Customer Batch",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spring-loom-demo/customer/batch/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spring-loom-demo",
+                "customer",
+                "batch",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    }
+  ]
 }
