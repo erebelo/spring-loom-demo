@@ -19,7 +19,6 @@ public class CsvReaderService {
         try (Reader reader = Files.newBufferedReader(path);
                 CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get()
                         .parse(reader)) {
-
             return parser.stream().map(mapper).toList();
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read CSV file: " + path.toAbsolutePath(), e);

@@ -49,7 +49,6 @@ public class BatchOrchestratorService {
      * status when finished.
      */
     private <T> void executeBatch(String executionId, BatchContext<T> context) {
-
         try {
             batchExecutionService.markRunning(executionId);
 

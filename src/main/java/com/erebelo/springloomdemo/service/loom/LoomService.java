@@ -44,7 +44,6 @@ public class LoomService {
     }
 
     public <T> WriteResultDto write(List<T> batch, Consumer<T> persistFunction, Function<T, String> recordIdExtractor) {
-
         List<WriteResultDto.ItemErrorDto> errors = new CopyOnWriteArrayList<>();
         long successCount = 0;
 
@@ -60,7 +59,6 @@ public class LoomService {
              * these lightweight threads onto a small pool of carrier (OS) threads.
              */
             List<Future<Boolean>> futures = chunk.stream().map(item -> workerExecutor.submit(() -> {
-
                 String recordId = recordIdExtractor.apply(item);
                 boolean acquired = false;
 
@@ -82,7 +80,6 @@ public class LoomService {
                         semaphore.release();
                     }
                 }
-
             })).toList();
 
             /*
