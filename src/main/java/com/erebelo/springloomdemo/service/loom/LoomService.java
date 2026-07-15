@@ -93,7 +93,6 @@ public class LoomService {
              * Future/VirtualThread objects bounded, avoiding excessive memory usage for
              * very large batches (e.g. millions of records).
              */
-
             successCount += futures.stream().map(future -> {
                 try {
                     return future.get();
