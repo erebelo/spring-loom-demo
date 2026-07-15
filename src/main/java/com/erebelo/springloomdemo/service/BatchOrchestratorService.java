@@ -52,7 +52,7 @@ public class BatchOrchestratorService {
         try {
             batchExecutionService.markRunning(executionId);
 
-            List<T> records = csvReaderService.read(context.path(), context.mapper());
+            List<T> records = csvReaderService.read(context.resource(), context.mapper());
             WriteResultDto writeResult = loomService.write(records, context.persistFunction(),
                     context.recordIdExtractor());
 

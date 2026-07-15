@@ -39,13 +39,13 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/spring-loom-demo/customer/batch/start",
+              "raw": "{{base_url}}/spring-loom-demo/customers/batch/start",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "spring-loom-demo",
-                "customer",
+                "customers",
                 "batch",
                 "start"
               ]

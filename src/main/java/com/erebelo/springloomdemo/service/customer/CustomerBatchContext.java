@@ -2,11 +2,12 @@ package com.erebelo.springloomdemo.service.customer;
 
 import com.erebelo.springloomdemo.domain.dto.CustomerDto;
 import com.erebelo.springloomdemo.service.BatchContext;
-import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,8 +22,8 @@ public class CustomerBatchContext implements BatchContext<CustomerDto> {
     }
 
     @Override
-    public Path path() {
-        return Path.of("input/customers.csv");
+    public Resource resource() {
+        return new ClassPathResource("input/customers.csv");
     }
 
     @Override
