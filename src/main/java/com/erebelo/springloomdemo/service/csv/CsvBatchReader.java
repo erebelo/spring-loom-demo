@@ -14,7 +14,7 @@ import org.apache.commons.csv.CSVRecord;
  * The underlying CSV parser remains open while batches are being consumed and
  * must be closed by the caller using try-with-resources.
  */
-public class CsvBatchReader<T> implements AutoCloseable {
+public final class CsvBatchReader<T> implements AutoCloseable {
 
     private final CSVParser parser;
     private final Iterator<CSVRecord> iterator;
@@ -22,6 +22,10 @@ public class CsvBatchReader<T> implements AutoCloseable {
     private final int batchSize;
 
     public CsvBatchReader(CSVParser parser, Function<CSVRecord, T> mapper, int batchSize) {
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Batch size must be greater than zero.");
+        }
+
         this.parser = parser;
         this.iterator = parser.iterator();
         this.mapper = mapper;

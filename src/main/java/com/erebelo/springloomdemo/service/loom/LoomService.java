@@ -41,7 +41,7 @@ public class LoomService {
     private final Semaphore semaphore;
 
     public LoomService(@Qualifier("workerExecutor") ExecutorService workerExecutor,
-            @Value("${batch.loom.max-concurrency:25}") int permits) {
+            @Value("${batch.loom.semaphore.max-permits:25}") int permits) {
         this.workerExecutor = workerExecutor;
         this.semaphore = new Semaphore(permits);
     }
