@@ -49,7 +49,6 @@ public class CustomerService {
                 .set("email").toValue(customer.getEmail()).set("age").toValue(customer.getAge()).set("city")
                 .toValue(customer.getCity()).set("country").toValue(customer.getCountry()).set("registrationDate")
                 .toValue(customer.getRegistrationDate()).set("active").toValue(customer.getActive())
-                .set("modifiedDateTime").toValue(now).set("modifiedBy").toValue("default")
 
                 /*
                  * Manually manages audit fields and version since MongoDB upsert bypasses
@@ -58,12 +57,11 @@ public class CustomerService {
                  * Initializes values for new documents and preserves/increments values for
                  * updates.
                  */
+                .set("createdBy").toValue(ConditionalOperators.ifNull("createdBy").then("default")).set("modifiedBy")
+                .toValue("default").set("createdDateTime")
+                .toValue(ConditionalOperators.ifNull("createdDateTime").then(now)).set("modifiedDateTime").toValue(now)
                 .set("version")
-                .toValue(ArithmeticOperators.Add.valueOf(ConditionalOperators.ifNull("version").then(-1)).add(1))
-
-                .set("createdDateTime").toValue(ConditionalOperators.ifNull("createdDateTime").then(now))
-
-                .set("createdBy").toValue(ConditionalOperators.ifNull("createdBy").then("default"));
+                .toValue(ArithmeticOperators.Add.valueOf(ConditionalOperators.ifNull("version").then(-1)).add(1));
 
         /*
          * Performs an atomic MongoDB upsert operation.

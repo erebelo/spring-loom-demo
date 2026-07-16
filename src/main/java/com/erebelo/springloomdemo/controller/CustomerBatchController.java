@@ -8,6 +8,7 @@ import com.erebelo.springloomdemo.service.BatchOrchestratorService;
 import com.erebelo.springloomdemo.service.customer.CustomerBatchContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +25,7 @@ public class CustomerBatchController {
     private final CustomerBatchContext context;
 
     @PostMapping(value = CUSTOMERS_BATCH_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<BatchResponseDto> triggerCustomerHydration() {
+    public ResponseEntity<@NonNull BatchResponseDto> triggerCustomerHydration() {
         log.info("POST {}", CUSTOMERS_PATH + CUSTOMERS_BATCH_PATH);
         String executionId = service.process(context);
         return ResponseEntity.accepted()

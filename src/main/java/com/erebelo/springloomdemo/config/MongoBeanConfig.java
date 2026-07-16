@@ -2,8 +2,8 @@ package com.erebelo.springloomdemo.config;
 
 import com.erebelo.springloomdemo.converter.LocalDateReadingConverter;
 import com.erebelo.springloomdemo.converter.LocalDateWritingConverter;
-import java.util.Arrays;
 import java.util.Optional;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
@@ -11,9 +11,7 @@ import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
-import org.springframework.data.mongodb.core.mapping.event.ValidatingMongoEventListener;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @Configuration
 @EnableMongoAuditing
@@ -29,19 +27,11 @@ public class MongoBeanConfig {
     }
 
     /**
-     * Enables entity validation before persisting to MongoDB.
-     */
-    @Bean
-    public ValidatingMongoEventListener validatingMongoEventListener(final LocalValidatorFactoryBean factory) {
-        return new ValidatingMongoEventListener(factory);
-    }
-
-    /**
      * Provides current user info for @CreatedBy and @LastModifiedBy fields used in
      * the BaseEntity.
      */
     @Bean
-    public AuditorAware<String> auditorProvider() {
+    public AuditorAware<@NonNull String> auditorProvider() {
         return () -> Optional.of("default");
     }
 
@@ -51,7 +41,9 @@ public class MongoBeanConfig {
      */
     @Bean
     public MongoCustomConversions customConversions() {
-        return new MongoCustomConversions(
-                Arrays.asList(new LocalDateWritingConverter(), new LocalDateReadingConverter()));
+        return MongoCustomConversions.create(adapter -> {
+            adapter.registerConverter(new LocalDateWritingConverter());
+            adapter.registerConverter(new LocalDateReadingConverter());
+        });
     }
 }

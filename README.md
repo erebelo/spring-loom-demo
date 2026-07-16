@@ -23,11 +23,10 @@ To pull the `spring-common-parent` dependency, follow these steps:
 
    Go to your GitHub account -> **Settings** -> **Developer settings** -> **Personal access tokens** -> **Tokens (classic)** -> **Generate new token (
    classic)**:
-
-    - Fill out the **Note** field: `Pull packages`.
-    - Set the scope:
-        - `read:packages` (to download packages)
-    - Click **Generate token**.
+   - Fill out the **Note** field: `Pull packages`.
+   - Set the scope:
+     - `read:packages` (to download packages)
+   - Click **Generate token**.
 
 2. **Set Up Maven Authentication**:
 
@@ -47,13 +46,24 @@ To pull the `spring-common-parent` dependency, follow these steps:
 
 ## Run App
 
+- Create the required MongoDB indexes described in the [MongoDB Indexes](#mongodb-indexes) section.
 - Complete the required [Data Generator](#data-generator) step.
 - Run the `SpringLoomDemoApplication` class as Java Application.
 
-## Collection
+## MongoDB Indexes
 
-[Project Collection](https://github.com/erebelo/spring-loom-demo/tree/main/collection)
+Creating the required indexes is essential for good batch processing performance.
+
+**Customer**
+
+```javascript
+db.customers.createIndex({ customerId: 1 }, { unique: true });
+```
 
 ## Data Generator
 
 [Customer Data Generator](https://github.com/erebelo/spring-loom-demo/blob/main/docs/customer-data-generator.md)
+
+## Collection
+
+[Project Collection](https://github.com/erebelo/spring-loom-demo/tree/main/collection)
