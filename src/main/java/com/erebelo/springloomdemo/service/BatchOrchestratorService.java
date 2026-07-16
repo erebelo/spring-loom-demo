@@ -1,6 +1,7 @@
 package com.erebelo.springloomdemo.service;
 
 import com.erebelo.springloomdemo.domain.model.WriteContext;
+import com.erebelo.springloomdemo.service.csv.CsvBatchReader;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
 import com.erebelo.springloomdemo.service.loom.LoomService;
 import java.util.List;
@@ -35,33 +36,39 @@ public class BatchOrchestratorService {
     public <T> String process(BatchContext<T> context) {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 15);
 
-        batchExecutionService.create(executionId, context.processor());
+        batchExecutionService.createExecution(executionId, context.processor());
         batchExecutor.execute(() -> executeBatch(executionId, context));
 
         return executionId;
     }
 
     /**
-     * Executes the batch asynchronously.
+     * Executes the batch asynchronously by processing the CSV in chunks.
      * <p>
-     * If an unexpected failure occurs, the accumulated WriteContext preserves the
-     * number of successful records and all record-level failures processed before
-     * the interruption.
+     * A checkpoint is persisted after each chunk so progress, successful records,
+     * and failed records are preserved even if the batch terminates unexpectedly.
      */
     private <T> void executeBatch(String executionId, BatchContext<T> context) {
+        batchExecutionService.markRunning(executionId);
         WriteContext writeContext = new WriteContext();
 
-        try {
-            batchExecutionService.markRunning(executionId);
+        try (CsvBatchReader<T> batches = csvReaderService.readInBatches(context.resource(), context.mapper(),
+                context.csvReadBatchSize())) {
 
-            List<T> records = csvReaderService.read(context.resource(), context.mapper());
-            loomService.write(records, context.persistFunction(), context.recordIdExtractor(), writeContext);
+            while (batches.hasNext()) {
+                List<T> batch = batches.next();
 
-            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
-            batchExecutionService.markCompleted(executionId, writeContext);
+                loomService.write(batch, context.persistFunction(), context.recordIdExtractor(), writeContext);
+
+                batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+                batchExecutionService.checkpoint(executionId, writeContext);
+
+                // Start a fresh context for the next chunk
+                writeContext = new WriteContext();
+            }
+
+            batchExecutionService.markCompleted(executionId);
         } catch (Exception ex) {
-            // Persist any partial failures accumulated before the batch stopped.
-            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
             batchExecutionService.markFailed(executionId, writeContext, ex);
         }
     }

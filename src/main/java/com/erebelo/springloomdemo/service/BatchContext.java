@@ -9,6 +9,8 @@ public interface BatchContext<T> {
 
     String processor();
 
+    int csvReadBatchSize();
+
     Resource resource();
 
     Function<CSVRecord, T> mapper();

@@ -32,6 +32,7 @@ public class BatchExecution extends BaseEntity {
     @NotNull(message = "startedAt is mandatory")
     private LocalDateTime startedAt;
 
+    private LocalDateTime lastCheckpointAt;
     private LocalDateTime completedAt;
     private Integer successes;
     private Integer failures;

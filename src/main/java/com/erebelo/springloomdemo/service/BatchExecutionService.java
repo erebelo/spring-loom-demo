@@ -18,7 +18,7 @@ public class BatchExecutionService {
 
     private final MongoTemplate mongoTemplate;
 
-    public void create(String executionId, String processor) {
+    public void createExecution(String executionId, String processor) {
         BatchExecution execution = BatchExecution.builder().id(executionId).processor(processor)
                 .status(BatchStatus.PENDING).startedAt(LocalDateTime.now(ZoneOffset.UTC)).successes(0).failures(0)
                 .build();
@@ -34,13 +34,21 @@ public class BatchExecutionService {
         mongoTemplate.save(execution);
     }
 
-    public void markCompleted(String executionId, WriteContext writeContext) {
+    public void checkpoint(String executionId, WriteContext writeContext) {
+        BatchExecution execution = findBatchExecutionById(executionId);
+
+        execution.setLastCheckpointAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
+        execution.setFailures(execution.getFailures() + writeContext.getErrors().size());
+
+        mongoTemplate.save(execution);
+    }
+
+    public void markCompleted(String executionId) {
         BatchExecution execution = findBatchExecutionById(executionId);
 
         execution.setStatus(BatchStatus.COMPLETED);
         execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
-        execution.setSuccesses(Math.toIntExact(writeContext.getSuccessCount().get()));
-        execution.setFailures(writeContext.getErrors().size());
 
         mongoTemplate.save(execution);
     }
@@ -50,8 +58,8 @@ public class BatchExecutionService {
 
         execution.setStatus(BatchStatus.FAILED);
         execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
-        execution.setSuccesses(Math.toIntExact(writeContext.getSuccessCount().get()));
-        execution.setFailures(writeContext.getErrors().size());
+        execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
+        execution.setFailures(execution.getFailures() + writeContext.getErrors().size());
         execution.setExceptionMessage(ex.getMessage());
         execution.setStackTrace(ExceptionUtils.getStackTrace(ex));
 
@@ -59,7 +67,7 @@ public class BatchExecutionService {
     }
 
     public void saveFailedRecords(String executionId, String processor, WriteContext writeContext) {
-        if (writeContext.getErrors().isEmpty()) {
+        if (writeContext == null || writeContext.getErrors().isEmpty()) {
             return;
         }
 

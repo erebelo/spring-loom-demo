@@ -29,7 +29,7 @@ public class LoomService {
      * Future and other JVM objects. Processing records in chunks keeps memory usage
      * predictable while still allowing high concurrency.
      */
-    private static final int CHUNK_SIZE = 25_000;
+    private static final int CHUNK_SIZE = 1_000;
 
     /*
      * Limits the number of concurrent database operations.

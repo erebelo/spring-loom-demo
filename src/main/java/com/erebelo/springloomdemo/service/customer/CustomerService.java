@@ -27,7 +27,7 @@ public class CustomerService {
         Query query = Query.query(Criteria.where("customerId").is(dto.customerId()));
 
         /*
-         * Performs an atomic, thread-safe upsert.
+         * TODO BaseEntity Performs an atomic, thread-safe upsert.
          *
          * MongoDB executes the replace-or-insert as a single indivisible operation.
          * Multiple Virtual Threads can safely invoke this method concurrently without

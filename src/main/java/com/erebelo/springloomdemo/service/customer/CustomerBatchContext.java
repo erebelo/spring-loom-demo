@@ -22,6 +22,11 @@ public class CustomerBatchContext implements BatchContext<CustomerDto> {
     }
 
     @Override
+    public int csvReadBatchSize() {
+        return 5_000;
+    }
+
+    @Override
     public Resource resource() {
         return new ClassPathResource("input/customers.csv");
     }
