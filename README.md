@@ -7,7 +7,7 @@ with controlled parallelism using semaphores.
 ## Requirements
 
 - Java 21
-- Spring Boot 3.x.x
+- Spring Boot 4.x.x
 - Apache Maven 3.8.6
 
 ## Libraries

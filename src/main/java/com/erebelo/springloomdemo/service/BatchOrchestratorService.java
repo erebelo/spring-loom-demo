@@ -34,7 +34,7 @@ public class BatchOrchestratorService {
      * request to return immediately without waiting for the batch to finish.
      */
     public <T> String process(BatchContext<T> context) {
-        String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 15);
+        String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 18);
 
         batchExecutionService.createExecution(executionId, context.processor());
         batchExecutor.execute(() -> executeBatch(executionId, context));
