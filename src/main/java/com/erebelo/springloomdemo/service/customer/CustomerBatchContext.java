@@ -18,7 +18,7 @@ public class CustomerBatchContext implements BatchContext<CustomerDto> {
 
     @Override
     public String processor() {
-        return "Customer";
+        return "CUSTOMER";
     }
 
     @Override

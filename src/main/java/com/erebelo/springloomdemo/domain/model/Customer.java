@@ -1,7 +1,7 @@
 package com.erebelo.springloomdemo.domain.model;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,8 +31,7 @@ public class Customer extends BaseEntity {
     @NotBlank(message = "lastName is mandatory")
     private String lastName;
 
-    @Email
-    @NotBlank(message = "email is mandatory")
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "email is mandatory and must be valid")
     private String email;
 
     private Integer age;

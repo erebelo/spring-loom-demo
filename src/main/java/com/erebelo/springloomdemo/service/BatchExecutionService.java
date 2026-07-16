@@ -10,9 +10,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,34 +27,35 @@ public class BatchExecutionService {
     }
 
     public void markRunning(String executionId) {
-        Query query = Query.query(Criteria.where("_id").is(executionId));
+        BatchExecution execution = findBatchExecutionById(executionId);
 
-        Update update = new Update().set("status", BatchStatus.RUNNING);
+        execution.setStatus(BatchStatus.RUNNING);
 
-        mongoTemplate.updateFirst(query, update, BatchExecution.class);
+        mongoTemplate.save(execution);
     }
 
     public void markCompleted(String executionId, WriteContext writeContext) {
-        Query query = Query.query(Criteria.where("_id").is(executionId));
+        BatchExecution execution = findBatchExecutionById(executionId);
 
-        Update update = new Update().set("status", BatchStatus.COMPLETED)
-                .set("completedAt", LocalDateTime.now(ZoneOffset.UTC))
-                .set("successes", Math.toIntExact(writeContext.getSuccessCount().get()))
-                .set("failures", writeContext.getErrors().size());
+        execution.setStatus(BatchStatus.COMPLETED);
+        execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setSuccesses(Math.toIntExact(writeContext.getSuccessCount().get()));
+        execution.setFailures(writeContext.getErrors().size());
 
-        mongoTemplate.updateFirst(query, update, BatchExecution.class);
+        mongoTemplate.save(execution);
     }
 
     public void markFailed(String executionId, WriteContext writeContext, Exception ex) {
-        Query query = Query.query(Criteria.where("_id").is(executionId));
+        BatchExecution execution = findBatchExecutionById(executionId);
 
-        Update update = new Update().set("status", BatchStatus.FAILED)
-                .set("completedAt", LocalDateTime.now(ZoneOffset.UTC))
-                .set("successes", Math.toIntExact(writeContext.getSuccessCount().get()))
-                .set("failures", writeContext.getErrors().size()).set("exceptionMessage", ex.getMessage())
-                .set("stackTrace", ExceptionUtils.getStackTrace(ex));
+        execution.setStatus(BatchStatus.FAILED);
+        execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setSuccesses(Math.toIntExact(writeContext.getSuccessCount().get()));
+        execution.setFailures(writeContext.getErrors().size());
+        execution.setExceptionMessage(ex.getMessage());
+        execution.setStackTrace(ExceptionUtils.getStackTrace(ex));
 
-        mongoTemplate.updateFirst(query, update, BatchExecution.class);
+        mongoTemplate.save(execution);
     }
 
     public void saveFailedRecords(String executionId, String processor, WriteContext writeContext) {
@@ -72,5 +70,15 @@ public class BatchExecutionService {
                 .toList();
 
         mongoTemplate.insertAll(failedRecords);
+    }
+
+    private BatchExecution findBatchExecutionById(String executionId) {
+        BatchExecution execution = mongoTemplate.findById(executionId, BatchExecution.class);
+
+        if (execution == null) {
+            throw new IllegalStateException("Batch execution not found: " + executionId);
+        }
+
+        return execution;
     }
 }
