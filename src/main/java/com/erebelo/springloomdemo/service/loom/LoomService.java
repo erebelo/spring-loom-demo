@@ -1,8 +1,8 @@
 package com.erebelo.springloomdemo.service.loom;
 
-import com.erebelo.springloomdemo.domain.dto.WriteResultDto;
+import com.erebelo.springloomdemo.domain.model.WriteContext;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -10,46 +10,47 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/*
- * Loom is simply the codename of the Java project that introduced virtual threads.
+/**
+ * Loom is simply the codename of the Java project that introduced virtual
+ * threads.
  */
-
 @Service
 public class LoomService {
 
     private final ExecutorService workerExecutor;
 
     /*
-     * Number of tasks submitted concurrently.
+     * Maximum number of tasks submitted to the executor at once.
      *
-     * Virtual threads are lightweight, but each submitted task also creates a
-     * Future and other JVM objects. Chunking keeps memory usage bounded while still
-     * allowing the JVM to efficiently schedule virtual threads.
+     * Although Virtual Threads are lightweight, each submitted task also creates a
+     * Future and other JVM objects. Processing records in chunks keeps memory usage
+     * predictable while still allowing high concurrency.
      */
     private static final int CHUNK_SIZE = 25_000;
 
     /*
      * Limits the number of concurrent database operations.
      *
-     * Virtual threads are inexpensive to create, but databases still have a limited
-     * number of available connections. The semaphore provides back-pressure by
-     * allowing only N tasks to execute the persistence logic simultaneously.
+     * Virtual Threads are inexpensive to create, but the database connection pool
+     * is limited. The semaphore provides back-pressure by allowing only a fixed
+     * number of tasks to execute the persistence logic simultaneously.
      */
-    private final Semaphore semaphore = new Semaphore(50);
+    private final Semaphore semaphore;
 
-    public LoomService(@Qualifier("workerExecutor") ExecutorService workerExecutor) {
+    public LoomService(@Qualifier("workerExecutor") ExecutorService workerExecutor,
+            @Value("${batch.loom.max-concurrency:50}") int permits) {
         this.workerExecutor = workerExecutor;
+        this.semaphore = new Semaphore(permits);
     }
 
-    public <T> WriteResultDto write(List<T> batch, Consumer<T> persistFunction, Function<T, String> recordIdExtractor) {
-        List<WriteResultDto.ItemErrorDto> errors = new CopyOnWriteArrayList<>();
-        long successCount = 0;
-
+    public <T> void write(List<T> batch, Consumer<T> persistFunction, Function<T, String> recordIdExtractor,
+            WriteContext writeContext) {
         /*
-         * Process the input in chunks to avoid creating millions of
-         * Future/VirtualThread objects simultaneously.
+         * Process records in chunks to avoid creating millions of Future and Virtual
+         * Thread objects simultaneously.
          */
         for (int i = 0; i < batch.size(); i += CHUNK_SIZE) {
             List<T> chunk = batch.subList(i, Math.min(i + CHUNK_SIZE, batch.size()));
@@ -58,7 +59,7 @@ public class LoomService {
              * One task = One Virtual Thread (Java 21 recommended model). The JVM schedules
              * these lightweight threads onto a small pool of carrier (OS) threads.
              */
-            List<Future<Boolean>> futures = chunk.stream().map(item -> workerExecutor.submit(() -> {
+            List<Future<Void>> futures = chunk.stream().map(item -> workerExecutor.submit((Callable<Void>) () -> {
                 String recordId = recordIdExtractor.apply(item);
                 boolean acquired = false;
 
@@ -67,14 +68,16 @@ public class LoomService {
                     acquired = true;
 
                     persistFunction.accept(item);
-                    return true;
-                } catch (Exception e) {
-                    if (e instanceof InterruptedException) {
+
+                    writeContext.incrementSuccess();
+                    return null;
+                } catch (Exception ex) {
+                    if (ex instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
                     }
 
-                    errors.add(new WriteResultDto.ItemErrorDto(recordId, e, item));
-                    return false;
+                    writeContext.addError(new WriteContext.ItemError(recordId, ex, item));
+                    return null;
                 } finally {
                     if (acquired) {
                         semaphore.release();
@@ -83,30 +86,28 @@ public class LoomService {
             })).toList();
 
             /*
-             * Wait for every task in the current chunk to finish. Future.get() blocks only
-             * this coordinating thread until the corresponding virtual thread completes.
+             * Wait for every task in the current chunk to finish.
              *
-             * While virtual threads are waiting (DB, I/O, semaphore, etc.), the JVM
-             * releases their carrier threads to execute other work.
+             * Future.get() blocks only this coordinating thread while the corresponding
+             * Virtual Thread completes.
              *
-             * Processing one chunk at a time keeps the number of active
-             * Future/VirtualThread objects bounded, avoiding excessive memory usage for
-             * very large batches (e.g. millions of records).
+             * If a Virtual Thread is blocked waiting on I/O or the semaphore, the JVM
+             * releases its carrier thread to execute other work.
+             *
+             * Waiting for one chunk at a time keeps the number of active Future objects
+             * bounded for very large batches.
              */
-            successCount += futures.stream().map(future -> {
+            for (Future<Void> future : futures) {
                 try {
-                    return future.get();
-                } catch (InterruptedException e) {
+                    future.get();
+                } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
-                    return false;
-                } catch (ExecutionException e) {
-                    return false;
+                    throw new IllegalStateException("Batch execution was interrupted.", ex);
+                } catch (ExecutionException ex) {
+                    throw new IllegalStateException("Unexpected error while waiting for batch tasks to complete.",
+                            ex.getCause());
                 }
-            }).filter(Boolean::booleanValue).count();
+            }
         }
-
-        return errors.isEmpty()
-                ? WriteResultDto.success(successCount)
-                : WriteResultDto.withErrors(successCount, errors);
     }
 }

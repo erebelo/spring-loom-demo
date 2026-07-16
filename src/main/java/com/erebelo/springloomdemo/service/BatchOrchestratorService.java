@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.service;
 
-import com.erebelo.springloomdemo.domain.dto.WriteResultDto;
+import com.erebelo.springloomdemo.domain.model.WriteContext;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
 import com.erebelo.springloomdemo.service.loom.LoomService;
 import java.util.List;
@@ -35,30 +35,34 @@ public class BatchOrchestratorService {
     public <T> String process(BatchContext<T> context) {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 15);
 
-        batchExecutionService.create(executionId);
+        batchExecutionService.create(executionId, context.processor());
         batchExecutor.execute(() -> executeBatch(executionId, context));
 
         return executionId;
     }
 
     /**
-     * Executes the batch in the background.
+     * Executes the batch asynchronously.
      * <p>
-     * Steps: 1. Mark execution as RUNNING. 2. Read and map the CSV into DTOs. 3.
-     * Process records concurrently using LoomService. 4. Update the execution
-     * status when finished.
+     * If an unexpected failure occurs, the accumulated WriteContext preserves the
+     * number of successful records and all record-level failures processed before
+     * the interruption.
      */
     private <T> void executeBatch(String executionId, BatchContext<T> context) {
+        WriteContext writeContext = new WriteContext();
+
         try {
             batchExecutionService.markRunning(executionId);
 
             List<T> records = csvReaderService.read(context.resource(), context.mapper());
-            WriteResultDto writeResult = loomService.write(records, context.persistFunction(),
-                    context.recordIdExtractor());
+            loomService.write(records, context.persistFunction(), context.recordIdExtractor(), writeContext);
 
-            batchExecutionService.markCompleted(executionId, writeResult);
+            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+            batchExecutionService.markCompleted(executionId, writeContext);
         } catch (Exception ex) {
-            batchExecutionService.markFailed(executionId, ex);
+            // Persist any partial failures accumulated before the batch stopped.
+            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+            batchExecutionService.markFailed(executionId, writeContext, ex);
         }
     }
 }

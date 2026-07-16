@@ -35,5 +35,7 @@ public class BatchExecution extends BaseEntity {
     private LocalDateTime completedAt;
     private Integer successes;
     private Integer failures;
+    private String exceptionMessage;
+    private String stackTrace;
 
 }

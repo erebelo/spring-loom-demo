@@ -17,7 +17,7 @@ public class CustomerService {
     private final CustomerMapper mapper;
     private final MongoTemplate mongoTemplate;
 
-    /*
+    /**
      * No @Transactional required: replace(...).upsert() is a single atomic MongoDB
      * operation that either completes entirely or fails without requiring an
      * application transaction.
