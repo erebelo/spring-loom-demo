@@ -6,8 +6,7 @@ import com.erebelo.springloomdemo.mapper.CustomerMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -42,7 +41,7 @@ public class CustomerService {
 
         Query query = Query.query(Criteria.where("customerId").is(dto.customerId()));
 
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        Instant now = Instant.now();
 
         AggregationUpdate update = AggregationUpdate.update().set("customerId").toValue(customer.getCustomerId())
                 .set("firstName").toValue(customer.getFirstName()).set("lastName").toValue(customer.getLastName())
@@ -58,9 +57,8 @@ public class CustomerService {
                  * updates.
                  */
                 .set("createdBy").toValue(ConditionalOperators.ifNull("createdBy").then("default")).set("modifiedBy")
-                .toValue("default").set("createdDateTime")
-                .toValue(ConditionalOperators.ifNull("createdDateTime").then(now)).set("modifiedDateTime").toValue(now)
-                .set("version")
+                .toValue("default").set("createdAt").toValue(ConditionalOperators.ifNull("createdAt").then(now))
+                .set("modifiedAt").toValue(now).set("version")
                 .toValue(ArithmeticOperators.Add.valueOf(ConditionalOperators.ifNull("version").then(-1)).add(1));
 
         /*

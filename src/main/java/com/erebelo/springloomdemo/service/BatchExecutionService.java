@@ -4,8 +4,7 @@ import com.erebelo.springloomdemo.domain.enumertion.BatchStatus;
 import com.erebelo.springloomdemo.domain.model.BatchExecution;
 import com.erebelo.springloomdemo.domain.model.BatchFailedRecord;
 import com.erebelo.springloomdemo.domain.model.WriteContext;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -20,8 +19,7 @@ public class BatchExecutionService {
 
     public void createExecution(String executionId, String processor) {
         BatchExecution execution = BatchExecution.builder().id(executionId).processor(processor)
-                .status(BatchStatus.PENDING).startedAt(LocalDateTime.now(ZoneOffset.UTC)).successes(0).failures(0)
-                .build();
+                .status(BatchStatus.PENDING).startedAt(Instant.now()).successes(0).failures(0).build();
 
         mongoTemplate.insert(execution);
     }
@@ -37,7 +35,7 @@ public class BatchExecutionService {
     public void checkpoint(String executionId, WriteContext writeContext) {
         BatchExecution execution = findBatchExecutionById(executionId);
 
-        execution.setLastCheckpointAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setLastCheckpointAt(Instant.now());
         execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
         execution.setFailures(execution.getFailures() + writeContext.getErrors().size());
 
@@ -48,7 +46,7 @@ public class BatchExecutionService {
         BatchExecution execution = findBatchExecutionById(executionId);
 
         execution.setStatus(BatchStatus.COMPLETED);
-        execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setCompletedAt(Instant.now());
 
         mongoTemplate.save(execution);
     }
@@ -57,7 +55,7 @@ public class BatchExecutionService {
         BatchExecution execution = findBatchExecutionById(executionId);
 
         execution.setStatus(BatchStatus.FAILED);
-        execution.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
+        execution.setCompletedAt(Instant.now());
         execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
         execution.setFailures(execution.getFailures() + writeContext.getErrors().size());
         execution.setExceptionMessage(ex.getMessage());

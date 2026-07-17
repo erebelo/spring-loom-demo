@@ -3,7 +3,7 @@ package com.erebelo.springloomdemo.domain.model;
 import com.erebelo.springloomdemo.domain.enumertion.BatchStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,10 +30,10 @@ public class BatchExecution extends BaseEntity {
     private BatchStatus status;
 
     @NotNull(message = "startedAt is mandatory")
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
-    private LocalDateTime lastCheckpointAt;
-    private LocalDateTime completedAt;
+    private Instant lastCheckpointAt;
+    private Instant completedAt;
     private Integer successes;
     private Integer failures;
     private String exceptionMessage;

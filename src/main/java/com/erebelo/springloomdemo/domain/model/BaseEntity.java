@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,10 +24,10 @@ public abstract class BaseEntity {
     private String modifiedBy;
 
     @CreatedDate
-    private LocalDateTime createdDateTime;
+    private Instant createdAt;
 
     @LastModifiedDate
-    private LocalDateTime modifiedDateTime;
+    private Instant modifiedAt;
 
     @Version
     private Long version;
