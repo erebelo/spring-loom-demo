@@ -26,8 +26,11 @@ public class CustomerBatchController {
 
     @PostMapping(value = CUSTOMERS_BATCH_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<@NonNull BatchResponseDto> triggerCustomerHydration() {
-        log.info("POST {}", CUSTOMERS_PATH + CUSTOMERS_BATCH_PATH);
+        log.info("Batch hydration request received. processor={}, method=POST, endpoint={}", context.processor(),
+                CUSTOMERS_PATH + CUSTOMERS_BATCH_PATH);
+
         String executionId = service.process(context);
+
         return ResponseEntity.accepted()
                 .body(new BatchResponseDto(executionId, "Customer batch submitted successfully"));
     }
