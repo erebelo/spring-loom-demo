@@ -41,7 +41,7 @@ public class BatchOrchestratorService {
 
         log.info("Starting batch execution. executionId={}, processor={}", executionId, context.processor());
 
-        batchExecutionService.createExecution(executionId, context.processor());
+        batchExecutionService.createExecutionIfAvailable(executionId, context.processor());
         batchExecutor.execute(() -> executeBatch(executionId, context));
 
         return executionId;

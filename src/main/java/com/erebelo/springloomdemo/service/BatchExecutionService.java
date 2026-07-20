@@ -9,6 +9,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,9 +19,16 @@ public class BatchExecutionService {
 
     private final MongoTemplate mongoTemplate;
 
-    public void createExecution(String executionId, String processor) {
+    public void createExecutionIfAvailable(String executionId, String processor) {
+        Query query = Query.query(
+                Criteria.where("processor").is(processor).and("status").in(BatchStatus.QUEUED, BatchStatus.RUNNING));
+
+        if (mongoTemplate.exists(query, BatchExecution.class)) {
+            throw new IllegalStateException("A batch execution is already in progress for processor: " + processor);
+        }
+
         BatchExecution execution = BatchExecution.builder().id(executionId).processor(processor)
-                .status(BatchStatus.PENDING).startedAt(Instant.now()).successes(0).failures(0).build();
+                .status(BatchStatus.QUEUED).startedAt(Instant.now()).successes(0).failures(0).build();
 
         mongoTemplate.insert(execution);
     }
