@@ -1,8 +1,5 @@
 package com.erebelo.springloomdemo.controller;
 
-import static com.erebelo.springloomdemo.constant.BusinessConstant.CUSTOMERS_BATCH_PATH;
-import static com.erebelo.springloomdemo.constant.BusinessConstant.CUSTOMERS_PATH;
-
 import com.erebelo.springloomdemo.domain.dto.BatchResponseDto;
 import com.erebelo.springloomdemo.service.BatchOrchestratorService;
 import com.erebelo.springloomdemo.service.customer.CustomerBatchContext;
@@ -17,17 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping(CUSTOMERS_PATH)
+@RequestMapping("/customers")
 @RequiredArgsConstructor
 public class CustomerBatchController {
 
     private final BatchOrchestratorService service;
     private final CustomerBatchContext context;
 
-    @PostMapping(value = CUSTOMERS_BATCH_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/batch/start", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<@NonNull BatchResponseDto> triggerCustomerHydration() {
-        log.info("Batch hydration request received. processor={}, method=POST, endpoint={}", context.processor(),
-                CUSTOMERS_PATH + CUSTOMERS_BATCH_PATH);
+        log.info("Batch hydration request received. processor={}, method=POST, endpoint=/customers/batch/start",
+                context.processor());
 
         String executionId = service.process(context);
 
