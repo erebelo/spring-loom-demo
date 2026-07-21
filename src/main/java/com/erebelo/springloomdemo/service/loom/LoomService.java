@@ -47,7 +47,7 @@ public class LoomService {
     }
 
     public <T> void write(List<T> batch, Consumer<T> persistFunction, Function<T, String> recordIdExtractor,
-            WriteContext writeContext) {
+            WriteContext writeContext) throws InterruptedException {
         /*
          * Process records in chunks to avoid creating millions of Future and Virtual
          * Thread objects simultaneously.
@@ -102,7 +102,7 @@ public class LoomService {
                     future.get();
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
-                    throw new IllegalStateException("Batch execution was interrupted.", ex);
+                    throw ex;
                 } catch (ExecutionException ex) {
                     throw new IllegalStateException("Unexpected error while waiting for batch tasks to complete.",
                             ex.getCause());

@@ -4,6 +4,8 @@ import com.erebelo.springloomdemo.domain.enumertion.BatchStatus;
 import com.erebelo.springloomdemo.domain.model.BatchExecution;
 import com.erebelo.springloomdemo.domain.model.BatchFailedRecord;
 import com.erebelo.springloomdemo.domain.model.WriteContext;
+import com.erebelo.springloomdemo.exception.model.ConflictException;
+import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class BatchExecutionService {
                 Criteria.where("processor").is(processor).and("status").in(BatchStatus.QUEUED, BatchStatus.RUNNING));
 
         if (mongoTemplate.exists(query, BatchExecution.class)) {
-            throw new IllegalStateException("A batch execution is already in progress for processor: " + processor);
+            throw new ConflictException("A batch execution is already in progress for processor: " + processor);
         }
 
         BatchExecution execution = BatchExecution.builder().id(executionId).processor(processor)
@@ -91,7 +93,7 @@ public class BatchExecutionService {
         BatchExecution execution = mongoTemplate.findById(executionId, BatchExecution.class);
 
         if (execution == null) {
-            throw new IllegalStateException("Batch execution not found: " + executionId);
+            throw new NotFoundException("Batch execution not found: " + executionId);
         }
 
         return execution;

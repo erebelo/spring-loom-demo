@@ -4,7 +4,9 @@ import com.erebelo.springloomdemo.exception.model.BadRequestException;
 import com.erebelo.springloomdemo.exception.model.ConflictException;
 import com.erebelo.springloomdemo.exception.model.ExceptionResponse;
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,6 +31,18 @@ public class GlobalExceptionHandler {
         return createResponse(HttpStatus.NOT_FOUND, exception);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handleConstraintViolationException(ConstraintViolationException exception) {
+        log.error("Validation failed.", exception);
+
+        String message = exception.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + " " + violation.getMessage()).sorted()
+                .collect(Collectors.joining(", "));
+
+        return createResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionResponse handleConflictException(ConflictException exception) {
@@ -44,8 +58,10 @@ public class GlobalExceptionHandler {
     }
 
     private ExceptionResponse createResponse(HttpStatus status, Exception exception) {
-        String message = exception.getMessage();
+        return createResponse(status, exception.getMessage());
+    }
 
+    private ExceptionResponse createResponse(HttpStatus status, String message) {
         if (message == null || message.isBlank()) {
             message = "No message available.";
         }
