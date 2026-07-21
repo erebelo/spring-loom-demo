@@ -13,7 +13,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>spring-loom-demo</name>
     <description>Java project built with Spring Boot to showcase Java 21 Project Loom (Virtual Threads) for scalable concurrent batch processing,
-        including CSV ingestion, DTO mapping, and MongoDB persistence with controlled concurrency using semaphores.
+        including CSV ingestion, DTO mapping, and MongoDB persistence with controlled concurrency using semaphores
     </description>
 
     <repositories>
