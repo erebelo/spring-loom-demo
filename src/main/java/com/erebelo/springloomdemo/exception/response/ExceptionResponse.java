@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.exception.model;
+package com.erebelo.springloomdemo.exception.response;
 
 import java.time.Instant;
 import org.springframework.http.HttpStatus;

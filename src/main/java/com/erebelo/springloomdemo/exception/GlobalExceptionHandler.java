@@ -2,8 +2,8 @@ package com.erebelo.springloomdemo.exception;
 
 import com.erebelo.springloomdemo.exception.model.BadRequestException;
 import com.erebelo.springloomdemo.exception.model.ConflictException;
-import com.erebelo.springloomdemo.exception.model.ExceptionResponse;
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
+import com.erebelo.springloomdemo.exception.response.ExceptionResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.util.stream.Collectors;
