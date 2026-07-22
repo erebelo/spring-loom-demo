@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.domain.model;
+package com.erebelo.springloomdemo.model.entity;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

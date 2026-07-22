@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.service.loom;
 
-import com.erebelo.springloomdemo.domain.model.WriteContext;
+import com.erebelo.springloomdemo.model.context.WriteContext;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;

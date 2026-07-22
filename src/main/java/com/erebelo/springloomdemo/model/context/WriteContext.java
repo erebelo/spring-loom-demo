@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.domain.model;
+package com.erebelo.springloomdemo.model.context;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

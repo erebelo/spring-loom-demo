@@ -1,8 +1,8 @@
 package com.erebelo.springloomdemo.service.customer;
 
-import com.erebelo.springloomdemo.domain.dto.CustomerDto;
-import com.erebelo.springloomdemo.domain.model.Customer;
 import com.erebelo.springloomdemo.mapper.CustomerMapper;
+import com.erebelo.springloomdemo.model.dto.request.CustomerRequest;
+import com.erebelo.springloomdemo.model.entity.Customer;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -30,8 +30,8 @@ public class CustomerService {
      * operation that either completes entirely or fails without requiring an
      * application transaction.
      */
-    public void upsert(CustomerDto dto) {
-        Customer customer = mapper.toEntity(dto);
+    public void upsert(CustomerRequest request) {
+        Customer customer = mapper.toEntity(request);
 
         Set<ConstraintViolation<Customer>> violations = validator.validate(customer);
 
@@ -39,7 +39,7 @@ public class CustomerService {
             throw new ConstraintViolationException(violations);
         }
 
-        Query query = Query.query(Criteria.where("customerId").is(dto.customerId()));
+        Query query = Query.query(Criteria.where("customerId").is(request.customerId()));
 
         Instant now = Instant.now();
 

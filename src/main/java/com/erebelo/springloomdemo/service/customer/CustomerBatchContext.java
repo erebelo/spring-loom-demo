@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.service.customer;
 
-import com.erebelo.springloomdemo.domain.dto.CustomerDto;
+import com.erebelo.springloomdemo.model.dto.request.CustomerRequest;
 import com.erebelo.springloomdemo.service.BatchContext;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CustomerBatchContext implements BatchContext<CustomerDto> {
+public class CustomerBatchContext implements BatchContext<CustomerRequest> {
 
     private final CustomerService customerService;
 
@@ -32,17 +32,17 @@ public class CustomerBatchContext implements BatchContext<CustomerDto> {
     }
 
     @Override
-    public Function<CSVRecord, CustomerDto> mapper() {
-        return CustomerDto::fromRecord;
+    public Function<CSVRecord, CustomerRequest> mapper() {
+        return CustomerRequest::fromRecord;
     }
 
     @Override
-    public Consumer<CustomerDto> persistFunction() {
+    public Consumer<CustomerRequest> persistFunction() {
         return customerService::upsert;
     }
 
     @Override
-    public Function<CustomerDto, String> recordIdExtractor() {
-        return CustomerDto::customerId;
+    public Function<CustomerRequest, String> recordIdExtractor() {
+        return CustomerRequest::customerId;
     }
 }

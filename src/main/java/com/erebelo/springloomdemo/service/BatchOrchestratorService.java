@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.service;
 
-import com.erebelo.springloomdemo.domain.model.WriteContext;
+import com.erebelo.springloomdemo.model.context.WriteContext;
 import com.erebelo.springloomdemo.service.csv.CsvBatchReader;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
 import com.erebelo.springloomdemo.service.loom.LoomService;

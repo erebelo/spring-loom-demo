@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.controller;
 
-import com.erebelo.springloomdemo.domain.dto.BatchResponseDto;
+import com.erebelo.springloomdemo.model.dto.response.BatchResponse;
 import com.erebelo.springloomdemo.service.BatchOrchestratorService;
 import com.erebelo.springloomdemo.service.customer.CustomerBatchContext;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +22,12 @@ public class CustomerBatchController {
     private final CustomerBatchContext context;
 
     @PostMapping(value = "/batch/start", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<@NonNull BatchResponseDto> triggerCustomerHydration() {
+    public ResponseEntity<@NonNull BatchResponse> triggerCustomerHydration() {
         log.info("Batch hydration request received. processor={}, method=POST, endpoint=/customers/batch/start",
                 context.processor());
 
         String executionId = service.process(context);
 
-        return ResponseEntity.accepted()
-                .body(new BatchResponseDto(executionId, "Customer batch submitted successfully"));
+        return ResponseEntity.accepted().body(new BatchResponse(executionId, "Customer batch submitted successfully"));
     }
 }
