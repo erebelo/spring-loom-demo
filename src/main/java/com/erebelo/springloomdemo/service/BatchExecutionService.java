@@ -2,10 +2,10 @@ package com.erebelo.springloomdemo.service;
 
 import com.erebelo.springloomdemo.exception.model.ConflictException;
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
-import com.erebelo.springloomdemo.model.context.WriteContext;
+import com.erebelo.springloomdemo.model.dto.WriteContext;
 import com.erebelo.springloomdemo.model.entity.BatchExecution;
 import com.erebelo.springloomdemo.model.entity.BatchFailedRecord;
-import com.erebelo.springloomdemo.model.enumertion.BatchStatusEnum;
+import com.erebelo.springloomdemo.model.entity.enums.BatchStatus;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,15 +22,15 @@ public class BatchExecutionService {
     private final MongoTemplate mongoTemplate;
 
     public void createExecutionIfAvailable(String executionId, String processor) {
-        Query query = Query.query(Criteria.where("processor").is(processor).and("status").in(BatchStatusEnum.QUEUED,
-                BatchStatusEnum.RUNNING));
+        Query query = Query.query(
+                Criteria.where("processor").is(processor).and("status").in(BatchStatus.QUEUED, BatchStatus.RUNNING));
 
         if (mongoTemplate.exists(query, BatchExecution.class)) {
             throw new ConflictException("A batch execution is already in progress for processor: " + processor);
         }
 
         BatchExecution execution = BatchExecution.builder().id(executionId).processor(processor)
-                .status(BatchStatusEnum.QUEUED).startedAt(Instant.now()).successes(0).failures(0).build();
+                .status(BatchStatus.QUEUED).startedAt(Instant.now()).successes(0).failures(0).build();
 
         mongoTemplate.insert(execution);
     }
@@ -38,7 +38,7 @@ public class BatchExecutionService {
     public void markRunning(String executionId) {
         BatchExecution execution = findBatchExecutionById(executionId);
 
-        execution.setStatus(BatchStatusEnum.RUNNING);
+        execution.setStatus(BatchStatus.RUNNING);
 
         mongoTemplate.save(execution);
     }
@@ -56,7 +56,7 @@ public class BatchExecutionService {
     public void markCompleted(String executionId) {
         BatchExecution execution = findBatchExecutionById(executionId);
 
-        execution.setStatus(BatchStatusEnum.COMPLETED);
+        execution.setStatus(BatchStatus.COMPLETED);
         execution.setCompletedAt(Instant.now());
 
         mongoTemplate.save(execution);
@@ -65,7 +65,7 @@ public class BatchExecutionService {
     public void markFailed(String executionId, WriteContext writeContext, Exception ex) {
         BatchExecution execution = findBatchExecutionById(executionId);
 
-        execution.setStatus(BatchStatusEnum.FAILED);
+        execution.setStatus(BatchStatus.FAILED);
         execution.setCompletedAt(Instant.now());
         execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
         execution.setFailures(execution.getFailures() + writeContext.getErrors().size());

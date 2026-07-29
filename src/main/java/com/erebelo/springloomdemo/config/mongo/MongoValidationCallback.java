@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.config;
+package com.erebelo.springloomdemo.config.mongo;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class MongoValidationConfig implements BeforeConvertCallback<@NonNull Object> {
+public class MongoValidationCallback implements BeforeConvertCallback<@NonNull Object> {
 
     private final Validator validator;
 

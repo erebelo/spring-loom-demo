@@ -1,7 +1,7 @@
-package com.erebelo.springloomdemo.config;
+package com.erebelo.springloomdemo.config.mongo;
 
-import com.erebelo.springloomdemo.converter.LocalDateReadingConverter;
-import com.erebelo.springloomdemo.converter.LocalDateWritingConverter;
+import com.erebelo.springloomdemo.config.mongo.converter.LocalDateReadingConverter;
+import com.erebelo.springloomdemo.config.mongo.converter.LocalDateWritingConverter;
 import java.util.Optional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
@@ -16,13 +16,13 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @Configuration
 @EnableMongoAuditing
 @EnableMongoRepositories(basePackages = "com.erebelo.springloomdemo")
-public class MongoBeanConfig {
+public class MongoConfig {
 
     /**
      * Enables transaction management for MongoDB operations through @Transactional.
      */
     @Bean
-    public MongoTransactionManager transactionManager(MongoDatabaseFactory dbFactory) {
+    MongoTransactionManager transactionManager(MongoDatabaseFactory dbFactory) {
         return new MongoTransactionManager(dbFactory);
     }
 
@@ -31,7 +31,7 @@ public class MongoBeanConfig {
      * the BaseEntity.
      */
     @Bean
-    public AuditorAware<@NonNull String> auditorProvider() {
+    AuditorAware<@NonNull String> auditorProvider() {
         return () -> Optional.of("default");
     }
 
@@ -40,7 +40,7 @@ public class MongoBeanConfig {
      * LocalDate values.
      */
     @Bean
-    public MongoCustomConversions customConversions() {
+    MongoCustomConversions customConversions() {
         return MongoCustomConversions.create(adapter -> {
             adapter.registerConverter(new LocalDateWritingConverter());
             adapter.registerConverter(new LocalDateReadingConverter());

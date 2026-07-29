@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.converter;
+package com.erebelo.springloomdemo.config.mongo.converter;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;

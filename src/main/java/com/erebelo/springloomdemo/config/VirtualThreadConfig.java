@@ -9,12 +9,12 @@ import org.springframework.context.annotation.Configuration;
 public class VirtualThreadConfig {
 
     @Bean(destroyMethod = "close")
-    public ExecutorService batchExecutor() {
+    ExecutorService batchExecutor() {
         return Executors.newVirtualThreadPerTaskExecutor();
     }
 
     @Bean(destroyMethod = "close")
-    public ExecutorService workerExecutor() {
+    ExecutorService workerExecutor() {
         return Executors.newVirtualThreadPerTaskExecutor();
     }
 }
