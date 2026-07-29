@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.model.entity.enums;
+package com.erebelo.springloomdemo.model.enums;
 
 public enum BatchStatus {
 

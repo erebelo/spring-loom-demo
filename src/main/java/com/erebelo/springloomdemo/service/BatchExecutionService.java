@@ -5,7 +5,7 @@ import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
 import com.erebelo.springloomdemo.model.entity.BatchExecution;
 import com.erebelo.springloomdemo.model.entity.BatchFailedRecord;
-import com.erebelo.springloomdemo.model.entity.enums.BatchStatus;
+import com.erebelo.springloomdemo.model.enums.BatchStatus;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
