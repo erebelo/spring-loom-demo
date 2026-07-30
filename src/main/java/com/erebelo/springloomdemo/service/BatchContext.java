@@ -1,5 +1,6 @@
 package com.erebelo.springloomdemo.service;
 
+import com.erebelo.springloomdemo.model.enums.BatchProcessor;
 import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -8,7 +9,7 @@ import org.springframework.core.io.Resource;
 
 public interface BatchContext<T> {
 
-    String processor();
+    BatchProcessor processor();
 
     Duration staleTimeout();
 

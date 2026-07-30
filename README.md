@@ -1,8 +1,8 @@
 # Spring Loom Demo
 
-REST API project developed in Java using Spring Boot 4 that demonstrates scalable concurrent batch processing with Java 21 Project Loom (Virtual
-Threads) by ingesting customer data from CSV files, mapping records to DTOs, and persisting them into MongoDB through concurrent upsert operations
-with controlled parallelism using semaphores.
+REST API developed with Java 21 and Spring Boot 4 that demonstrates scalable concurrent batch processing using Project Loom (Virtual Threads).
+The application ingests customer data from CSV files, maps records to DTOs, and performs concurrent upsert operations into MongoDB while controlling parallelism with semaphores.
+The processing pipeline is extensible through the Strategy design pattern, allowing different batch processors to be registered and orchestrated transparently.
 
 ## Requirements
 

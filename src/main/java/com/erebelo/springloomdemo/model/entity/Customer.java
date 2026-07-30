@@ -22,16 +22,17 @@ public class Customer extends BaseEntity {
     @Id
     private String id;
 
-    @NotBlank(message = "customerId is mandatory")
+    @NotBlank(message = "is mandatory")
     private String customerId;
 
-    @NotBlank(message = "firstName is mandatory")
+    @NotBlank(message = "is mandatory")
     private String firstName;
 
-    @NotBlank(message = "lastName is mandatory")
+    @NotBlank(message = "is mandatory")
     private String lastName;
 
-    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "email is mandatory and must be valid")
+    @NotBlank(message = "is mandatory")
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "must be valid")
     private String email;
 
     private Integer age;

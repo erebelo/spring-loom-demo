@@ -5,6 +5,7 @@ import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
 import com.erebelo.springloomdemo.model.entity.BatchExecution;
 import com.erebelo.springloomdemo.model.entity.BatchFailedRecord;
+import com.erebelo.springloomdemo.model.enums.BatchProcessor;
 import com.erebelo.springloomdemo.model.enums.BatchStatus;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,7 +24,7 @@ public class BatchExecutionService {
 
     private final MongoTemplate mongoTemplate;
 
-    public void startExecution(String executionId, String processor, Duration staleTimeout,
+    public void startExecution(String executionId, BatchProcessor processor, Duration staleTimeout,
             Predicate<String> isExecutionManaged) {
         Query query = Query.query(Criteria.where("processor").is(processor).and("status").is(BatchStatus.RUNNING));
 
@@ -82,7 +83,7 @@ public class BatchExecutionService {
         mongoTemplate.save(execution);
     }
 
-    public void saveFailedRecords(String executionId, String processor, WriteContext writeContext) {
+    public void saveFailedRecords(String executionId, BatchProcessor processor, WriteContext writeContext) {
         if (writeContext == null || writeContext.getErrors().isEmpty()) {
             return;
         }
@@ -96,7 +97,7 @@ public class BatchExecutionService {
         mongoTemplate.insertAll(failedRecords);
     }
 
-    private void recoverStaleRunningExecution(BatchExecution execution, String processor, Duration staleTimeout,
+    private void recoverStaleRunningExecution(BatchExecution execution, BatchProcessor processor, Duration staleTimeout,
             Predicate<String> isExecutionManaged) {
         Instant now = Instant.now();
 
@@ -116,8 +117,8 @@ public class BatchExecutionService {
         }
 
         markRecoveredAsFailed(execution, now,
-                ("Execution automatically marked as FAILED because no checkpoint was recorded for longer than the "
-                        + "configured stale timeout (%d minutes).").formatted(staleTimeout.toMinutes()));
+                "Execution automatically marked as FAILED because no checkpoint was recorded for longer than the "
+                        + "configured stale timeout (%d minutes).".formatted(staleTimeout.toMinutes()));
     }
 
     private void markRecoveredAsFailed(BatchExecution execution, Instant completedAt, String exceptionMessage) {

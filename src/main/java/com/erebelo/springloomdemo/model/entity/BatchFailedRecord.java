@@ -1,6 +1,8 @@
 package com.erebelo.springloomdemo.model.entity;
 
+import com.erebelo.springloomdemo.model.enums.BatchProcessor;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,16 +20,16 @@ public class BatchFailedRecord {
     @Id
     private String id;
 
-    @NotBlank(message = "executionId is mandatory")
+    @NotBlank(message = "is mandatory")
     private String executionId;
 
-    @NotBlank(message = "processor is mandatory")
-    private String processor;
+    @NotNull(message = "is mandatory")
+    private BatchProcessor processor;
 
-    @NotBlank(message = "exceptionMessage is mandatory")
+    @NotBlank(message = "is mandatory")
     private String exceptionMessage;
 
-    @NotBlank(message = "stackTrace is mandatory")
+    @NotBlank(message = "is mandatory")
     private String stackTrace;
 
     private Object metadata;
