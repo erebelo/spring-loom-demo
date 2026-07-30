@@ -78,8 +78,7 @@ public class BatchOrchestratorService {
                 checkpointNumber++;
 
                 log.debug(
-                        "Batch checkpoint completed. executionId={}, processor={}, checkpointNumber={}, recordsProcessed={}, successes={}, "
-                                + "failures={}",
+                        "Batch checkpoint completed. executionId={}, processor={}, checkpointNumber={}, recordsProcessed={}, successes={}, failures={}",
                         executionId, context.processor(), checkpointNumber, batch.size(),
                         writeContext.getSuccessCount().get(), writeContext.getErrors().size());
 
@@ -91,6 +90,16 @@ public class BatchOrchestratorService {
 
             log.info("Batch execution completed. executionId={}, processor={}, checkpoints={}, duration={}",
                     executionId, context.processor(), checkpointNumber, formatDuration(startTime));
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+
+            batchExecutionService.markFailed(executionId, writeContext, ex);
+
+            log.error(
+                    "Batch execution interrupted. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
+                    executionId, context.processor(), checkpointNumber, formatDuration(startTime),
+                    writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
+
         } catch (Exception ex) {
             batchExecutionService.markFailed(executionId, writeContext, ex);
 

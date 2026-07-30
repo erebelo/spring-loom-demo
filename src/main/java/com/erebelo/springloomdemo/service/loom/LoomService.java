@@ -68,14 +68,13 @@ public class LoomService {
                     acquired = true;
 
                     persistFunction.accept(item);
-
                     writeContext.incrementSuccess();
-                    return null;
-                } catch (Exception ex) {
-                    if (ex instanceof InterruptedException) {
-                        Thread.currentThread().interrupt();
-                    }
 
+                    return null;
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw ex;
+                } catch (Exception ex) {
                     writeContext.addError(new WriteContext.ItemError(recordId, ex, item));
                     return null;
                 } finally {
