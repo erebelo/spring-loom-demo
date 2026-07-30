@@ -57,6 +57,12 @@ Creating the required indexes is essential for good batch processing performance
 **Customer**
 
 ```javascript
+// Ensures only one RUNNING execution exists per processor.
+db.batch_execution.createIndex(
+  { processor: 1 },
+  { unique: true, partialFilterExpression: { status: "RUNNING" } },
+);
+
 db.customers.createIndex({ customerId: 1 }, { unique: true });
 ```
 

@@ -45,7 +45,8 @@ public class BatchOrchestratorService {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 18);
         log.info("Starting batch execution. executionId={}, processor={}", executionId, context.processor());
 
-        batchExecutionService.createExecutionIfAvailable(executionId, context.processor());
+        batchExecutionService.startExecution(executionId, context.processor(), context.staleTimeout(),
+                executionRegistry::containsExecution);
 
         Future<Void> future = batchExecutor.submit(() -> {
             executeBatch(executionId, context);
@@ -65,9 +66,6 @@ public class BatchOrchestratorService {
      */
     private <T> void executeBatch(String executionId, BatchContext<T> context) {
         long startTime = System.nanoTime();
-
-        batchExecutionService.markRunning(executionId);
-
         WriteContext writeContext = new WriteContext();
         int checkpointNumber = 0;
 
@@ -144,7 +142,10 @@ public class BatchOrchestratorService {
         Future<Void> future = executionRegistry.get(executionId);
 
         if (future == null) {
-            throw new NotFoundException("No running batch execution found for executionId: " + executionId);
+            throw new NotFoundException(
+                    "No active batch execution managed by this application was found for executionId: " + executionId
+                            + ". If the execution is still marked as RUNNING, it will be automatically recovered when a new execution for the same "
+                            + "processor is started.");
         }
 
         executionRegistry.requestCancellation(executionId);

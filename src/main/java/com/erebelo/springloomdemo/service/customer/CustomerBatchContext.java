@@ -2,6 +2,7 @@ package com.erebelo.springloomdemo.service.customer;
 
 import com.erebelo.springloomdemo.model.dto.request.CustomerRequest;
 import com.erebelo.springloomdemo.service.BatchContext;
+import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +17,16 @@ public class CustomerBatchContext implements BatchContext<CustomerRequest> {
 
     private final CustomerService customerService;
 
+    private static final Duration STALE_TIMEOUT = Duration.ofHours(1);
+
     @Override
     public String processor() {
         return "CUSTOMER";
+    }
+
+    @Override
+    public Duration staleTimeout() {
+        return STALE_TIMEOUT;
     }
 
     @Override

@@ -18,6 +18,10 @@ public class ExecutionRegistry {
         cancellations.put(executionId, new AtomicBoolean(false));
     }
 
+    public boolean containsExecution(String executionId) {
+        return executions.containsKey(executionId);
+    }
+
     public Future<Void> get(String executionId) {
         return executions.get(executionId);
     }
