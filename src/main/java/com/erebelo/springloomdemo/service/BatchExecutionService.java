@@ -62,6 +62,17 @@ public class BatchExecutionService {
         mongoTemplate.save(execution);
     }
 
+    public void markCancelled(String executionId, WriteContext writeContext) {
+        BatchExecution execution = findBatchExecutionById(executionId);
+
+        execution.setStatus(BatchStatus.CANCELLED);
+        execution.setCompletedAt(Instant.now());
+        execution.setSuccesses(execution.getSuccesses() + (int) writeContext.getSuccessCount().get());
+        execution.setFailures(execution.getFailures() + writeContext.getErrors().size());
+
+        mongoTemplate.save(execution);
+    }
+
     public void markFailed(String executionId, WriteContext writeContext, Exception ex) {
         BatchExecution execution = findBatchExecutionById(executionId);
 

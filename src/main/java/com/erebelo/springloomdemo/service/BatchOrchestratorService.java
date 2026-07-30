@@ -104,7 +104,12 @@ public class BatchOrchestratorService {
 
             try {
                 batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
-                batchExecutionService.markFailed(executionId, writeContext, ex);
+
+                if (executionRegistry.isCancellationRequested(executionId)) {
+                    batchExecutionService.markCancelled(executionId, writeContext);
+                } else {
+                    batchExecutionService.markFailed(executionId, writeContext, ex);
+                }
 
                 log.error(
                         "Batch execution interrupted. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
@@ -141,6 +146,8 @@ public class BatchOrchestratorService {
         if (future == null) {
             throw new NotFoundException("No running batch execution found for executionId: " + executionId);
         }
+
+        executionRegistry.requestCancellation(executionId);
 
         future.cancel(true);
 
