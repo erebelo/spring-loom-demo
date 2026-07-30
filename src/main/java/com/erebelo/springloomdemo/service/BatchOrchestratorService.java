@@ -1,5 +1,6 @@
 package com.erebelo.springloomdemo.service;
 
+import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
 import com.erebelo.springloomdemo.service.csv.CsvBatchReader;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
@@ -8,6 +9,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,13 +19,16 @@ import org.springframework.stereotype.Service;
 public class BatchOrchestratorService {
 
     private final ExecutorService batchExecutor;
+    private final ExecutionRegistry executionRegistry;
     private final BatchExecutionService batchExecutionService;
     private final CsvReaderService csvReaderService;
     private final LoomService loomService;
 
     public BatchOrchestratorService(@Qualifier("batchExecutor") ExecutorService batchExecutor,
-            BatchExecutionService batchExecutionService, CsvReaderService csvReaderService, LoomService loomService) {
+            ExecutionRegistry executionRegistry, BatchExecutionService batchExecutionService,
+            CsvReaderService csvReaderService, LoomService loomService) {
         this.batchExecutor = batchExecutor;
+        this.executionRegistry = executionRegistry;
         this.batchExecutionService = batchExecutionService;
         this.csvReaderService = csvReaderService;
         this.loomService = loomService;
@@ -38,11 +43,16 @@ public class BatchOrchestratorService {
      */
     public <T> String process(BatchContext<T> context) {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 18);
-
         log.info("Starting batch execution. executionId={}, processor={}", executionId, context.processor());
 
         batchExecutionService.createExecutionIfAvailable(executionId, context.processor());
-        batchExecutor.execute(() -> executeBatch(executionId, context));
+
+        Future<Void> future = batchExecutor.submit(() -> {
+            executeBatch(executionId, context);
+            return null;
+        });
+
+        executionRegistry.register(executionId, future);
 
         return executionId;
     }
@@ -73,7 +83,6 @@ public class BatchOrchestratorService {
                 loomService.write(batch, context.persistFunction(), context.recordIdExtractor(), writeContext);
 
                 batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
-
                 batchExecutionService.checkpoint(executionId, writeContext);
                 checkpointNumber++;
 
@@ -91,23 +100,51 @@ public class BatchOrchestratorService {
             log.info("Batch execution completed. executionId={}, processor={}, checkpoints={}, duration={}",
                     executionId, context.processor(), checkpointNumber, formatDuration(startTime));
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
+            boolean interrupted = Thread.interrupted();
 
-            batchExecutionService.markFailed(executionId, writeContext, ex);
+            try {
+                batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+                batchExecutionService.markFailed(executionId, writeContext, ex);
 
-            log.error(
-                    "Batch execution interrupted. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
-                    executionId, context.processor(), checkpointNumber, formatDuration(startTime),
-                    writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
-
+                log.error(
+                        "Batch execution interrupted. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
+                        executionId, context.processor(), checkpointNumber, formatDuration(startTime),
+                        writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         } catch (Exception ex) {
+            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
             batchExecutionService.markFailed(executionId, writeContext, ex);
 
             log.error(
                     "Batch execution failed. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
                     executionId, context.processor(), checkpointNumber, formatDuration(startTime),
                     writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
+        } finally {
+            executionRegistry.remove(executionId);
         }
+    }
+
+    /**
+     * Requests cancellation of a running batch execution.
+     * <p>
+     * Cancellation is cooperative. Interrupting the coordinator Virtual Thread
+     * prevents additional work from being scheduled while allowing any in-flight
+     * persistence operations to complete safely.
+     */
+    public void cancel(String executionId) {
+        Future<Void> future = executionRegistry.get(executionId);
+
+        if (future == null) {
+            throw new NotFoundException("No running batch execution found for executionId: " + executionId);
+        }
+
+        future.cancel(true);
+
+        log.info("Batch cancellation requested. executionId={}", executionId);
     }
 
     private static String formatDuration(long startTime) {

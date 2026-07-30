@@ -103,6 +103,15 @@ public class LoomService {
                     Thread.currentThread().interrupt();
                     throw ex;
                 } catch (ExecutionException ex) {
+                    /*
+                     * Worker-thread interruptions are wrapped by Future.get() in
+                     * ExecutionException, so they must be unwrapped and propagated.
+                     */
+                    if (ex.getCause() instanceof InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw interrupted;
+                    }
+
                     throw new IllegalStateException("Unexpected error while waiting for batch tasks to complete.",
                             ex.getCause());
                 }

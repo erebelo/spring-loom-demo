@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,5 +30,17 @@ public class CustomerBatchController {
         String executionId = service.process(context);
 
         return ResponseEntity.accepted().body(new BatchResponse(executionId, "Customer batch submitted successfully"));
+    }
+
+    @PostMapping(value = "/batch/{executionId}/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<@NonNull BatchResponse> cancelBatchExecution(@PathVariable String executionId) {
+        log.info(
+                "Batch cancellation request received. executionId={}, method=POST, endpoint=/customers/batch/{executionId}/cancel",
+                executionId);
+
+        service.cancel(executionId);
+
+        return ResponseEntity.accepted()
+                .body(new BatchResponse(executionId, "Batch cancellation requested successfully"));
     }
 }
