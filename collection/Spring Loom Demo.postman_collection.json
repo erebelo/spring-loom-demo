@@ -31,23 +31,69 @@
       ]
     },
     {
-      "name": "Customers",
+      "name": "Batch Executions",
       "item": [
         {
-          "name": "POST Trigger Customer Batch",
+          "name": "GET Processors",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/spring-loom-demo/customers/batch/start",
+              "raw": "{{base_url}}/spring-loom-demo/batch-executions/processors",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "spring-loom-demo",
-                "customers",
-                "batch",
-                "start"
+                "batch-executions",
+                "processors"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Trigger",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"processor\": \"CUSTOMER\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/spring-loom-demo/batch-executions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spring-loom-demo",
+                "batch-executions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Cancel by executionId",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spring-loom-demo/batch-executions/bulk-exec-72a6f9cf-8aa4-4221/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "spring-loom-demo",
+                "batch-executions",
+                "bulk-exec-72a6f9cf-8aa4-4221",
+                "cancel"
               ]
             }
           },
