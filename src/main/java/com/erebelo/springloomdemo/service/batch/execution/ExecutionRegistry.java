@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.service;
+package com.erebelo.springloomdemo.service.batch.execution;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

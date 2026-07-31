@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.model.entity;
 
-import com.erebelo.springloomdemo.model.enums.BatchProcessor;
+import com.erebelo.springloomdemo.model.enums.BatchProcessorName;
 import com.erebelo.springloomdemo.model.enums.BatchStatus;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
@@ -24,7 +24,7 @@ public class BatchExecution extends BaseEntity {
     private String id;
 
     @NotNull(message = "is mandatory")
-    private BatchProcessor processor;
+    private BatchProcessorName processor;
 
     @NotNull(message = "is mandatory")
     private BatchStatus status;

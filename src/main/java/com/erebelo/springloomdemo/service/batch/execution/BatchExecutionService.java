@@ -1,11 +1,11 @@
-package com.erebelo.springloomdemo.service;
+package com.erebelo.springloomdemo.service.batch.execution;
 
 import com.erebelo.springloomdemo.exception.model.ConflictException;
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
 import com.erebelo.springloomdemo.model.entity.BatchExecution;
 import com.erebelo.springloomdemo.model.entity.BatchFailedRecord;
-import com.erebelo.springloomdemo.model.enums.BatchProcessor;
+import com.erebelo.springloomdemo.model.enums.BatchProcessorName;
 import com.erebelo.springloomdemo.model.enums.BatchStatus;
 import java.time.Duration;
 import java.time.Instant;
@@ -24,17 +24,17 @@ public class BatchExecutionService {
 
     private final MongoTemplate mongoTemplate;
 
-    public void startExecution(String executionId, BatchProcessor processor, Duration staleTimeout,
+    public void startExecution(String executionId, BatchProcessorName processorName, Duration staleTimeout,
             Predicate<String> isExecutionManaged) {
-        Query query = Query.query(Criteria.where("processor").is(processor).and("status").is(BatchStatus.RUNNING));
+        Query query = Query.query(Criteria.where("processor").is(processorName).and("status").is(BatchStatus.RUNNING));
 
         BatchExecution execution = mongoTemplate.findOne(query, BatchExecution.class);
 
         if (execution != null) {
-            recoverStaleRunningExecution(execution, processor, staleTimeout, isExecutionManaged);
+            recoverStaleRunningExecution(execution, processorName, staleTimeout, isExecutionManaged);
         }
 
-        BatchExecution newExecution = BatchExecution.builder().id(executionId).processor(processor)
+        BatchExecution newExecution = BatchExecution.builder().id(executionId).processor(processorName)
                 .status(BatchStatus.RUNNING).startedAt(Instant.now()).successes(0).failures(0).build();
 
         mongoTemplate.insert(newExecution);
@@ -83,13 +83,13 @@ public class BatchExecutionService {
         mongoTemplate.save(execution);
     }
 
-    public void saveFailedRecords(String executionId, BatchProcessor processor, WriteContext writeContext) {
+    public void saveFailedRecords(String executionId, BatchProcessorName processorName, WriteContext writeContext) {
         if (writeContext == null || writeContext.getErrors().isEmpty()) {
             return;
         }
 
         List<BatchFailedRecord> failedRecords = writeContext.getErrors().stream()
-                .map(error -> BatchFailedRecord.builder().executionId(executionId).processor(processor)
+                .map(error -> BatchFailedRecord.builder().executionId(executionId).processor(processorName)
                         .exceptionMessage(error.exception().getMessage())
                         .stackTrace(ExceptionUtils.getStackTrace(error.exception())).metadata(error.item()).build())
                 .toList();
@@ -97,8 +97,8 @@ public class BatchExecutionService {
         mongoTemplate.insertAll(failedRecords);
     }
 
-    private void recoverStaleRunningExecution(BatchExecution execution, BatchProcessor processor, Duration staleTimeout,
-            Predicate<String> isExecutionManaged) {
+    private void recoverStaleRunningExecution(BatchExecution execution, BatchProcessorName processorName,
+            Duration staleTimeout, Predicate<String> isExecutionManaged) {
         Instant now = Instant.now();
 
         if (!isExecutionManaged.test(execution.getId())) {
@@ -113,7 +113,7 @@ public class BatchExecutionService {
                 : execution.getStartedAt();
 
         if (lastActivity.plus(staleTimeout).isAfter(now)) {
-            throw new ConflictException("A batch execution is already in progress for processor: " + processor);
+            throw new ConflictException("A batch execution is already in progress for processor: " + processorName);
         }
 
         markRecoveredAsFailed(execution, now,

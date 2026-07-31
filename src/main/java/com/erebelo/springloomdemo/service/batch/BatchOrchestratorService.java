@@ -1,7 +1,10 @@
-package com.erebelo.springloomdemo.service;
+package com.erebelo.springloomdemo.service.batch;
 
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
+import com.erebelo.springloomdemo.service.batch.execution.BatchExecutionService;
+import com.erebelo.springloomdemo.service.batch.execution.ExecutionRegistry;
+import com.erebelo.springloomdemo.service.batch.processor.BatchProcessor;
 import com.erebelo.springloomdemo.service.csv.CsvBatchReader;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
 import com.erebelo.springloomdemo.service.loom.LoomService;
@@ -41,15 +44,15 @@ public class BatchOrchestratorService {
      * The actual processing runs in a separate Virtual Thread, allowing the HTTP
      * request to return immediately without waiting for the batch to finish.
      */
-    public <T> String process(BatchContext<T> context) {
+    public <T> String process(BatchProcessor<T> processor) {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 18);
-        log.info("Starting batch execution. executionId={}, processor={}", executionId, context.processor());
+        log.info("Starting batch execution. executionId={}, processor={}", executionId, processor.processorName());
 
-        batchExecutionService.startExecution(executionId, context.processor(), context.staleTimeout(),
+        batchExecutionService.startExecution(executionId, processor.processorName(), processor.staleTimeout(),
                 executionRegistry::containsExecution);
 
         Future<Void> future = batchExecutor.submit(() -> {
-            executeBatch(executionId, context);
+            executeBatch(executionId, processor);
             return null;
         });
 
@@ -64,29 +67,29 @@ public class BatchOrchestratorService {
      * A checkpoint is persisted after each chunk so progress, successful records,
      * and failed records are preserved even if the batch terminates unexpectedly.
      */
-    private <T> void executeBatch(String executionId, BatchContext<T> context) {
+    private <T> void executeBatch(String executionId, BatchProcessor<T> processor) {
         long startTime = System.nanoTime();
         WriteContext writeContext = new WriteContext();
         int checkpointNumber = 0;
 
         log.info("Batch execution started. executionId={}, processor={}, batchSize={}", executionId,
-                context.processor(), context.csvReadBatchSize());
+                processor.processorName(), processor.csvReadBatchSize());
 
-        try (CsvBatchReader<T> batches = csvReaderService.readInBatches(context.resource(), context.mapper(),
-                context.csvReadBatchSize())) {
+        try (CsvBatchReader<T> batches = csvReaderService.readInBatches(processor.resource(), processor.mapper(),
+                processor.csvReadBatchSize())) {
 
             while (batches.hasNext()) {
                 List<T> batch = batches.next();
 
-                loomService.write(batch, context.persistFunction(), context.recordIdExtractor(), writeContext);
+                loomService.write(batch, processor.persistFunction(), processor.recordIdExtractor(), writeContext);
 
-                batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+                batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
                 batchExecutionService.checkpoint(executionId, writeContext);
                 checkpointNumber++;
 
                 log.debug(
                         "Batch checkpoint completed. executionId={}, processor={}, checkpointNumber={}, recordsProcessed={}, successes={}, failures={}",
-                        executionId, context.processor(), checkpointNumber, batch.size(),
+                        executionId, processor.processorName(), checkpointNumber, batch.size(),
                         writeContext.getSuccessCount().get(), writeContext.getErrors().size());
 
                 // Start a fresh context for the next chunk
@@ -96,12 +99,12 @@ public class BatchOrchestratorService {
             batchExecutionService.markCompleted(executionId);
 
             log.info("Batch execution completed. executionId={}, processor={}, checkpoints={}, duration={}",
-                    executionId, context.processor(), checkpointNumber, formatDuration(startTime));
+                    executionId, processor.processorName(), checkpointNumber, formatDuration(startTime));
         } catch (InterruptedException ex) {
             boolean interrupted = Thread.interrupted();
 
             try {
-                batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+                batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
 
                 if (executionRegistry.isCancellationRequested(executionId)) {
                     batchExecutionService.markCancelled(executionId, writeContext);
@@ -111,7 +114,7 @@ public class BatchOrchestratorService {
 
                 log.error(
                         "Batch execution interrupted. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
-                        executionId, context.processor(), checkpointNumber, formatDuration(startTime),
+                        executionId, processor.processorName(), checkpointNumber, formatDuration(startTime),
                         writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
             } finally {
                 if (interrupted) {
@@ -119,12 +122,12 @@ public class BatchOrchestratorService {
                 }
             }
         } catch (Exception ex) {
-            batchExecutionService.saveFailedRecords(executionId, context.processor(), writeContext);
+            batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
             batchExecutionService.markFailed(executionId, writeContext, ex);
 
             log.error(
                     "Batch execution failed. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",
-                    executionId, context.processor(), checkpointNumber, formatDuration(startTime),
+                    executionId, processor.processorName(), checkpointNumber, formatDuration(startTime),
                     writeContext.getSuccessCount().get(), writeContext.getErrors().size(), ex);
         } finally {
             executionRegistry.remove(executionId);

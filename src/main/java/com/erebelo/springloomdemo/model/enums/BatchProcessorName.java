@@ -1,6 +1,6 @@
 package com.erebelo.springloomdemo.model.enums;
 
-public enum BatchProcessor {
+public enum BatchProcessorName {
 
     CUSTOMER
 

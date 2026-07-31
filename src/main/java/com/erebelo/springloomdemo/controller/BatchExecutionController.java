@@ -3,9 +3,9 @@ package com.erebelo.springloomdemo.controller;
 import com.erebelo.springloomdemo.model.dto.request.BatchExecutionRequest;
 import com.erebelo.springloomdemo.model.dto.response.BatchExecutionResponse;
 import com.erebelo.springloomdemo.model.dto.response.BatchProcessorsResponse;
-import com.erebelo.springloomdemo.service.BatchContext;
-import com.erebelo.springloomdemo.service.BatchContextRegistry;
-import com.erebelo.springloomdemo.service.BatchOrchestratorService;
+import com.erebelo.springloomdemo.service.batch.BatchOrchestratorService;
+import com.erebelo.springloomdemo.service.batch.processor.BatchProcessor;
+import com.erebelo.springloomdemo.service.batch.processor.BatchProcessorRegistry;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BatchExecutionController {
 
-    private final BatchContextRegistry registry;
+    private final BatchProcessorRegistry registry;
     private final BatchOrchestratorService service;
 
     @GetMapping("/processors")
@@ -37,16 +37,16 @@ public class BatchExecutionController {
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
     public BatchExecutionResponse start(@Valid @RequestBody BatchExecutionRequest request) {
-        BatchContext<?> context = registry.get(request.processor());
+        BatchProcessor<?> processor = registry.get(request.processor());
 
-        log.info("Submitting batch. processor={}", context.processor());
+        log.info("Submitting batch. processor={}", processor.processorName());
 
-        String executionId = service.process(context);
+        String executionId = service.process(processor);
 
-        log.info("Batch submitted. executionId={}, processor={}", executionId, context.processor());
+        log.info("Batch submitted. executionId={}, processor={}", executionId, processor.processorName());
 
         return new BatchExecutionResponse(executionId,
-                "%s batch submitted successfully.".formatted(context.processor()));
+                "%s batch submitted successfully.".formatted(processor.processorName()));
     }
 
     @PostMapping("/{executionId}/cancel")

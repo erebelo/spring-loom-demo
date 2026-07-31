@@ -1,15 +1,15 @@
-package com.erebelo.springloomdemo.service;
+package com.erebelo.springloomdemo.service.batch.processor;
 
-import com.erebelo.springloomdemo.model.enums.BatchProcessor;
+import com.erebelo.springloomdemo.model.enums.BatchProcessorName;
 import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.core.io.Resource;
 
-public interface BatchContext<T> {
+public interface BatchProcessor<T> {
 
-    BatchProcessor processor();
+    BatchProcessorName processorName();
 
     Duration staleTimeout();
 
