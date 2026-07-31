@@ -43,8 +43,6 @@ public class BatchExecutionController {
 
         String executionId = service.process(processor);
 
-        log.info("Batch submitted. executionId={}, processor={}", executionId, processor.processorName());
-
         return new BatchExecutionResponse(executionId,
                 "%s batch submitted successfully.".formatted(processor.processorName()));
     }
@@ -55,8 +53,6 @@ public class BatchExecutionController {
         log.info("Cancelling batch execution. executionId={}", executionId);
 
         service.cancel(executionId);
-
-        log.info("Batch cancellation requested. executionId={}", executionId);
 
         return new BatchExecutionResponse(executionId, "Batch cancellation requested successfully.");
     }
