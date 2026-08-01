@@ -3,7 +3,7 @@ package com.erebelo.springloomdemo.controller;
 import com.erebelo.springloomdemo.model.dto.request.BatchExecutionRequest;
 import com.erebelo.springloomdemo.model.dto.response.BatchExecutionResponse;
 import com.erebelo.springloomdemo.model.dto.response.BatchProcessorsResponse;
-import com.erebelo.springloomdemo.service.batch.BatchOrchestratorService;
+import com.erebelo.springloomdemo.service.batch.orchestration.BatchOrchestratorService;
 import com.erebelo.springloomdemo.service.batch.processor.BatchProcessor;
 import com.erebelo.springloomdemo.service.batch.processor.BatchProcessorRegistry;
 import jakarta.validation.Valid;

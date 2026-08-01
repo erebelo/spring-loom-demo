@@ -1,13 +1,13 @@
-package com.erebelo.springloomdemo.service.batch;
+package com.erebelo.springloomdemo.service.batch.orchestration;
 
 import com.erebelo.springloomdemo.exception.model.NotFoundException;
 import com.erebelo.springloomdemo.model.dto.WriteContext;
+import com.erebelo.springloomdemo.service.batch.execution.BatchExecutionRegistry;
 import com.erebelo.springloomdemo.service.batch.execution.BatchExecutionService;
-import com.erebelo.springloomdemo.service.batch.execution.ExecutionRegistry;
 import com.erebelo.springloomdemo.service.batch.processor.BatchProcessor;
+import com.erebelo.springloomdemo.service.batch.writer.BatchConcurrentWriter;
 import com.erebelo.springloomdemo.service.csv.CsvBatchReader;
 import com.erebelo.springloomdemo.service.csv.CsvReaderService;
-import com.erebelo.springloomdemo.service.loom.LoomService;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -21,20 +21,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class BatchOrchestratorService {
 
-    private final ExecutorService batchExecutor;
-    private final ExecutionRegistry executionRegistry;
-    private final BatchExecutionService batchExecutionService;
+    private final ExecutorService virtualThreadBatchExecutor;
+    private final BatchExecutionRegistry executionRegistry;
+    private final BatchExecutionService executionService;
     private final CsvReaderService csvReaderService;
-    private final LoomService loomService;
+    private final BatchConcurrentWriter concurrentWriter;
 
-    public BatchOrchestratorService(@Qualifier("batchExecutor") ExecutorService batchExecutor,
-            ExecutionRegistry executionRegistry, BatchExecutionService batchExecutionService,
-            CsvReaderService csvReaderService, LoomService loomService) {
-        this.batchExecutor = batchExecutor;
+    public BatchOrchestratorService(@Qualifier("virtualThreadBatchExecutor") ExecutorService virtualThreadBatchExecutor,
+            BatchExecutionRegistry executionRegistry, BatchExecutionService executionService,
+            CsvReaderService csvReaderService, BatchConcurrentWriter concurrentWriter) {
+        this.virtualThreadBatchExecutor = virtualThreadBatchExecutor;
         this.executionRegistry = executionRegistry;
-        this.batchExecutionService = batchExecutionService;
+        this.executionService = executionService;
         this.csvReaderService = csvReaderService;
-        this.loomService = loomService;
+        this.concurrentWriter = concurrentWriter;
     }
 
     /**
@@ -48,10 +48,10 @@ public class BatchOrchestratorService {
         String executionId = "bulk-exec-" + UUID.randomUUID().toString().substring(0, 18);
         log.info("Starting batch execution. executionId={}, processor={}", executionId, processor.processorName());
 
-        batchExecutionService.startExecution(executionId, processor.processorName(), processor.staleTimeout(),
+        executionService.startExecution(executionId, processor.processorName(), processor.staleTimeout(),
                 executionRegistry::containsExecution);
 
-        Future<Void> future = batchExecutor.submit(() -> {
+        Future<Void> future = virtualThreadBatchExecutor.submit(() -> {
             executeBatch(executionId, processor);
             return null;
         });
@@ -81,10 +81,10 @@ public class BatchOrchestratorService {
             while (batches.hasNext()) {
                 List<T> batch = batches.next();
 
-                loomService.write(batch, processor.persistFunction(), processor.recordIdExtractor(), writeContext);
+                concurrentWriter.write(batch, processor.persistFunction(), processor.recordIdExtractor(), writeContext);
 
-                batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
-                batchExecutionService.checkpoint(executionId, writeContext);
+                executionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
+                executionService.checkpoint(executionId, writeContext);
                 checkpointNumber++;
 
                 log.debug(
@@ -96,7 +96,7 @@ public class BatchOrchestratorService {
                 writeContext = new WriteContext();
             }
 
-            batchExecutionService.markCompleted(executionId);
+            executionService.markCompleted(executionId);
 
             log.info("Batch execution completed. executionId={}, processor={}, checkpoints={}, duration={}",
                     executionId, processor.processorName(), checkpointNumber, formatDuration(startTime));
@@ -104,12 +104,12 @@ public class BatchOrchestratorService {
             boolean interrupted = Thread.interrupted();
 
             try {
-                batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
+                executionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
 
                 if (executionRegistry.isCancellationRequested(executionId)) {
-                    batchExecutionService.markCancelled(executionId, writeContext);
+                    executionService.markCancelled(executionId, writeContext);
                 } else {
-                    batchExecutionService.markFailed(executionId, writeContext, ex);
+                    executionService.markFailed(executionId, writeContext, ex);
                 }
 
                 log.error(
@@ -122,8 +122,8 @@ public class BatchOrchestratorService {
                 }
             }
         } catch (Exception ex) {
-            batchExecutionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
-            batchExecutionService.markFailed(executionId, writeContext, ex);
+            executionService.saveFailedRecords(executionId, processor.processorName(), writeContext);
+            executionService.markFailed(executionId, writeContext, ex);
 
             log.error(
                     "Batch execution failed. executionId={}, processor={}, checkpoints={}, duration={}, successes={}, failures={}",

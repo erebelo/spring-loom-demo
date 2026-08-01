@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ExecutionRegistry {
+public class BatchExecutionRegistry {
 
     private final ConcurrentMap<String, Future<Void>> executions = new ConcurrentHashMap<>();
     private final Map<String, AtomicBoolean> cancellations = new ConcurrentHashMap<>();

@@ -54,15 +54,19 @@ To pull the `spring-common-parent` dependency, follow these steps:
 
 Creating the required indexes is essential for good batch processing performance.
 
-**Customer**
+**batch_executions:**
 
 ```javascript
 // Ensures only one RUNNING execution exists per processor.
-db.batch_execution.createIndex(
+db.batch_executions.createIndex(
   { processor: 1 },
   { unique: true, partialFilterExpression: { status: "RUNNING" } },
 );
+```
 
+**customers:**
+
+```javascript
 db.customers.createIndex({ customerId: 1 }, { unique: true });
 ```
 

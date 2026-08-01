@@ -1,4 +1,4 @@
-package com.erebelo.springloomdemo.service.loom;
+package com.erebelo.springloomdemo.service.batch.writer;
 
 import com.erebelo.springloomdemo.model.dto.WriteContext;
 import java.util.List;
@@ -13,14 +13,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/**
- * Loom is simply the codename of the Java project that introduced virtual
- * threads.
- */
 @Service
-public class LoomService {
+public class BatchConcurrentWriter {
 
-    private final ExecutorService workerExecutor;
+    private final ExecutorService virtualThreadWorkerExecutor;
 
     /*
      * Maximum number of tasks submitted to the executor at once.
@@ -40,9 +36,9 @@ public class LoomService {
      */
     private final Semaphore semaphore;
 
-    public LoomService(@Qualifier("workerExecutor") ExecutorService workerExecutor,
+    public BatchConcurrentWriter(@Qualifier("virtualThreadWorkerExecutor") ExecutorService virtualThreadWorkerExecutor,
             @Value("${batch.loom.semaphore.max-permits:25}") int permits) {
-        this.workerExecutor = workerExecutor;
+        this.virtualThreadWorkerExecutor = virtualThreadWorkerExecutor;
         this.semaphore = new Semaphore(permits);
     }
 
@@ -59,30 +55,31 @@ public class LoomService {
              * One task = One Virtual Thread (Java 21 recommended model). The JVM schedules
              * these lightweight threads onto a small pool of carrier (OS) threads.
              */
-            List<Future<Void>> futures = chunk.stream().map(item -> workerExecutor.submit((Callable<Void>) () -> {
-                String recordId = recordIdExtractor.apply(item);
-                boolean acquired = false;
+            List<Future<Void>> futures = chunk.stream()
+                    .map(item -> virtualThreadWorkerExecutor.submit((Callable<Void>) () -> {
+                        String recordId = recordIdExtractor.apply(item);
+                        boolean acquired = false;
 
-                try {
-                    semaphore.acquire();
-                    acquired = true;
+                        try {
+                            semaphore.acquire();
+                            acquired = true;
 
-                    persistFunction.accept(item);
-                    writeContext.incrementSuccess();
+                            persistFunction.accept(item);
+                            writeContext.incrementSuccess();
 
-                    return null;
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    throw ex;
-                } catch (Exception ex) {
-                    writeContext.addError(new WriteContext.ItemError(recordId, ex, item));
-                    return null;
-                } finally {
-                    if (acquired) {
-                        semaphore.release();
-                    }
-                }
-            })).toList();
+                            return null;
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                            throw ex;
+                        } catch (Exception ex) {
+                            writeContext.addError(new WriteContext.ItemError(recordId, ex, item));
+                            return null;
+                        } finally {
+                            if (acquired) {
+                                semaphore.release();
+                            }
+                        }
+                    })).toList();
 
             /*
              * Wait for every task in the current chunk to finish.
