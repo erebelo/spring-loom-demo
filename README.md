@@ -46,15 +46,29 @@ To pull the `spring-common-parent` dependency, follow these steps:
 
 ## Run App
 
-- Create the required MongoDB indexes described in the [MongoDB Indexes](#mongodb-indexes) section.
+- Create the required [Database Setup](#database-setup) steps.
 - Complete the required [Data Generator](#data-generator) step.
 - Run the `SpringLoomDemoApplication` class as Java Application.
 
-## MongoDB Indexes
+## Database Setup
 
-Creating the required indexes is essential for good batch processing performance.
+Create the `loom_db` database and the required collections and indexes:
 
-**batch_executions:**
+**Create databse:**
+
+```javascript
+use loom_db
+```
+
+**Create collections:**
+
+```javascript
+db.createCollection("batch_executions");
+db.createCollection("batch_failed_records");
+db.createCollection("customers");
+```
+
+**Create indexes:**
 
 ```javascript
 // Ensures only one RUNNING execution exists per processor.
@@ -62,11 +76,8 @@ db.batch_executions.createIndex(
   { processor: 1 },
   { unique: true, partialFilterExpression: { status: "RUNNING" } },
 );
-```
 
-**customers:**
-
-```javascript
+// Ensures customer IDs are unique.
 db.customers.createIndex({ customerId: 1 }, { unique: true });
 ```
 
