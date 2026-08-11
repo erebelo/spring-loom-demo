@@ -20,16 +20,16 @@ public class BatchFailedRecord {
     @Id
     private String id;
 
-    @NotBlank(message = "is mandatory")
+    @NotBlank
     private String executionId;
 
-    @NotNull(message = "is mandatory")
+    @NotNull
     private BatchProcessorName processor;
 
-    @NotBlank(message = "is mandatory")
+    @NotBlank
     private String exceptionMessage;
 
-    @NotBlank(message = "is mandatory")
+    @NotBlank
     private String stackTrace;
 
     private Object metadata;

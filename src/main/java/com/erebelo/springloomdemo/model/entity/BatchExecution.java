@@ -23,13 +23,13 @@ public class BatchExecution extends BaseEntity {
     @Id
     private String id;
 
-    @NotNull(message = "is mandatory")
+    @NotNull
     private BatchProcessorName processor;
 
-    @NotNull(message = "is mandatory")
+    @NotNull
     private BatchStatus status;
 
-    @NotNull(message = "is mandatory")
+    @NotNull
     private Instant startedAt;
 
     private Instant lastCheckpointAt;
