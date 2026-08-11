@@ -10,6 +10,7 @@ public class SpringLoomDemoApplication {
     public static void main(String[] args) {
         // Ensures validation and other localized messages are consistently in English.
         Locale.setDefault(Locale.US);
+
         SpringApplication.run(SpringLoomDemoApplication.class, args);
     }
 }
