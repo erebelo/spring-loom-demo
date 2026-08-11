@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
             String property = violation.getPropertyPath().toString();
             property = property.substring(property.lastIndexOf('.') + 1);
 
-            return "Property '%s' %s".formatted(property, violation.getMessage());
+            return "'%s' %s".formatted(property, violation.getMessage());
         }).sorted().collect(Collectors.joining(", ", "", "."));
 
         return createResponse(HttpStatus.BAD_REQUEST, message);
