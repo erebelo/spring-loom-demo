@@ -52,9 +52,9 @@ To pull the `spring-common-parent` dependency, follow these steps:
 
 ## Database Setup
 
-Create the `loom_db` database and the required collections and indexes:
+Create the `loom_db` database and the required collections and indexes.
 
-**Create databse:**
+**Create database:**
 
 ```javascript
 use loom_db
