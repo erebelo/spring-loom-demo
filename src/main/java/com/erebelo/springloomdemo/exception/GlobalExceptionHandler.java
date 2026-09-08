@@ -116,7 +116,6 @@ public class GlobalExceptionHandler {
 
         String message = exception.getConstraintViolations().stream().map(violation -> {
             String property = violation.getPropertyPath().toString();
-            property = property.substring(property.lastIndexOf('.') + 1);
 
             return "'%s' %s".formatted(property, violation.getMessage());
         }).sorted().collect(Collectors.joining(", ", "", "."));
