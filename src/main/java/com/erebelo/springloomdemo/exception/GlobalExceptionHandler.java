@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
         log.warn("Constraint validation failed.");
 
         String message = exception.getConstraintViolations().stream().map(violation -> {
-            String property = violation.getPropertyPath().toString();
+            String property = violation.getPropertyPath().toString().replace(".<list element>", "");
 
             return "'%s' %s".formatted(property, violation.getMessage());
         }).sorted().collect(Collectors.joining(", ", "", "."));
