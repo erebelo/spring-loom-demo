@@ -23,6 +23,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.InvalidTypeIdException;
 
 @Slf4j
 @RestControllerAdvice
@@ -52,13 +53,15 @@ public class GlobalExceptionHandler {
 
         String message = "Invalid request body.";
 
-        if (exception.getCause() instanceof InvalidFormatException invalidFormatException
-                && invalidFormatException.getTargetType().isEnum()) {
-            String field = invalidFormatException.getPath().stream().map(JacksonException.Reference::getPropertyName)
+        if (exception.getCause() instanceof InvalidFormatException e && e.getTargetType().isEnum()) {
+            String field = e.getPath().stream().map(JacksonException.Reference::getPropertyName)
                     .filter(Objects::nonNull).collect(Collectors.joining("."));
 
-            message = "Invalid value '%s' for field '%s'. Allowed values: %s.".formatted(
-                    invalidFormatException.getValue(), field, getEnumValues(invalidFormatException.getTargetType()));
+            message = "Invalid value '%s' for field '%s'. Allowed values: %s.".formatted(e.getValue(), field,
+                    getEnumValues(e.getTargetType()));
+        } else if (exception.getCause() instanceof InvalidTypeIdException e && e.getMessage() != null
+                && !e.getMessage().isBlank()) {
+            message = e.getMessage();
         }
 
         return createResponse(HttpStatus.BAD_REQUEST, message);
